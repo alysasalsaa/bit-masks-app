@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bit Masks</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0a0f1e;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 52px;
+      gap: 22px;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; }
+    h1 { font-size: 2rem; font-weight: 800; letter-spacing: 1px; }
+    h1 span { color: #f59e0b; }
+    .subtitle { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+
+    /* ── Layout ── */
+    .layout {
+      width: 100%;
+      max-width: 860px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Panel ── */
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f59e0b;
+    }
+
+    /* ── City list ── */
+    .city-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+
+    .city-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .city-item:hover { border-color: #334155; background: #1a2744; }
+    .city-item.checked { border-color: #f59e0b; background: #1c1a03; }
+
+    .city-item input[type="checkbox"] { display: none; }
+
+    .custom-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #334155;
+      border-radius: 5px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      transition: all 0.15s;
+    }
+
+    .city-item.checked .custom-check {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #000;
+    }
+
+    .city-name { flex: 1; font-size: 0.85rem; color: #cbd5e1; }
+    .city-gmt  {
+      font-size: 0.72rem;
+      font-family: monospace;
+      font-weight: 700;
+      color: #475569;
+      background: #1e293b;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .city-item.checked .city-gmt { color: #fbbf24; background: #292000; }
+
+    /* ── Bit sequence display ── */
+    .bit-row {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+
+    .bit {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      font-size: 0;
+    }
+
+    .bit.on {
+      background: #f59e0b;
+      border-color: #b45309;
+      box-shadow: 0 0 4px rgba(245,158,11,0.4);
+    }
+
+    .bit-label {
+      font-size: 0.62rem;
+      color: #334155;
+      font-family: monospace;
+      margin-top: 3px;
+    }
+
+    /* ── Right panel ── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Search card ── */
+    .search-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 10px;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      font-family: monospace;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input:focus { border-color: #f59e0b; }
+    .input-row input.error { border-color: #ef4444; }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover  { transform: scale(1.03); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-find {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(245,158,11,0.3);
+    }
+
+    .btn-not {
+      background: #1e293b;
+      border: 1.5px solid #334155;
+      color: #94a3b8;
+      padding: 10px 14px;
+    }
+
+    .btn-not:hover { border-color: #7c3aed; color: #a78bfa; }
+    .btn-not.active { background: #2e1065; border-color: #7c3aed; color: #a78bfa; }
+
+    /* ── Mask visualizer ── */
+    .mask-viz {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mask-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mask-lbl {
+      font-size: 0.68rem;
+      font-family: monospace;
+      font-weight: 700;
+      color: #475569;
+      min-width: 64px;
+    }
+
+    .mask-bits { display: flex; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
+
+    .mbit {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      border: 1px solid #1e293b;
+      flex-shrink: 0;
+    }
+
+    .mbit.search { background: #7c3aed; border-color: #4f46e5; }
+    .mbit.match  { background: #f59e0b; border-color: #b45309; }
+    .mbit.result { background: #22c55e; border-color: #15803d; }
+    .mbit.off    { background: #1e293b; }
+
+    /* ── Result card ── */
+    .result-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 60px;
+    }
+
+    .result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+
+    .result-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .result-dot.not { background: #7c3aed; }
+
+    .result-city { font-size: 0.85rem; color: #e2e8f0; flex: 1; }
+    .result-gmt  { font-size: 0.72rem; font-family: monospace; color: #22c55e; font-weight: 700; }
+    .result-gmt.not { color: #a78bfa; }
+
+    .empty-note {
+      font-size: 0.82rem;
+      color: #334155;
+      text-align: center;
+      padding: 16px 0;
+      font-style: italic;
+    }
+
+    .summary {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-align: right;
+    }
+
+    .summary strong { color: #f59e0b; }
+
+    .msg-box {
+      display: none;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .msg-box.error { background:#1c0505; border:1px solid #7f1d1d; color:#ef4444; }
+    .msg-box.warn  { background:#1c1003; border:1px solid #92400e; color:#fbbf24; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.68rem;
+      color: #64748b;
+    }
+
+    .leg-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Bit <span>Masks</span></h1>
+    <p class="subtitle">Find cities by GMT offset using bitwise operations</p>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: City checkboxes -->
+    <div class="panel">
+      <div class="panel-title">Cities &amp; Timezones</div>
+      <div class="city-list" id="cityList"></div>
+
+      <!-- Bit legend -->
+      <div style="margin-top:4px">
+        <div class="panel-title" style="margin-bottom:8px">City Bit Sequence (GMT +12 → −12)</div>
+        <div class="bit-row" id="selectedBits"></div>
+        <div class="bit-label" id="bitHex"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+
+      <!-- Search -->
+      <div class="search-card">
+        <div class="panel-title">Search by GMT Offset</div>
+
+        <div class="field">
+          <label>GMT Offset (−12 to +12)</label>
+          <div class="input-row">
+            <input type="number" id="gmtInput" min="-12" max="12" placeholder="e.g. +2" />
+            <button class="btn btn-not" id="btnNot" onclick="toggleNot()" title="Find cities NOT in this offset">≠ NOT</button>
+            <button class="btn btn-find" onclick="findCities()">Find Cities</button>
+          </div>
+        </div>
+
+        <div class="msg-box" id="msgBox"></div>
+
+        <!-- Mask visualizer -->
+        <div class="mask-viz" id="maskViz" style="display:none">
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#7c3aed"></div>Search mask</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#f59e0b"></div>City bit</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#22c55e"></div>AND result</div>
+          </div>
+          <div class="mask-row">
+            <span class="mask-lbl">SEARCH</span>
+            <div class="mask-bits" id="maskSearch"></div>
+          </div>
+          <div class="mask-row">
+            <span class="mask-lbl">CITY</span>
+            <div class="mask-bits" id="maskCity"></div>
+          </div>
+          <div class="mask-row">
+            <span class="mask-lbl">AND</span>
+            <div class="mask-bits" id="maskResult"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="result-card">
+        <div class="panel-title">Results</div>
+        <div class="result-list" id="resultList">
+          <div class="empty-note">Enter a GMT offset and click Find Cities.</div>
+        </div>
+        <div class="summary" id="summary" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════
+       GMT OFFSET → BIT POSITION
+       Bit 0  = GMT +12
+       Bit 1  = GMT +11
+       ...
+       Bit 12 = GMT  0
+       Bit 13 = GMT -1
+       ...
+       Bit 24 = GMT -12
+       Total 25 bits used (0–24)
+    ═══════════════════════════════════════ */
+    const GMT_LABELS = [];
+    for (let g = 12; g >= -12; g--) GMT_LABELS.push(g); // index 0..24
+
+    function gmtToBit(gmtOffset) {
+      return 12 - gmtOffset; // +12→0, 0→12, -12→24
+    }
+
+    function buildMask(gmtOffset) {
+      // BigInt for 25-bit masks (safe beyond 32 bits)
+      return 1n << BigInt(gmtToBit(gmtOffset));
+    }
+
+    /* ═══════════════════════════════════════
+       CITY DATA — each city has a BigInt mask
+    ═══════════════════════════════════════ */
+    const CITIES = [
+      { name: 'Moscow',          gmt: +3  },
+      { name: 'Paris',           gmt: +2  },
+      { name: 'Berlin',          gmt: +2  },
+      { name: 'Brussels',        gmt: +2  },
+      { name: 'Amsterdam',       gmt: +2  },
+      { name: 'Rome',            gmt: +2  },
+      { name: 'London',          gmt: +1  },
+      { name: 'Dublin',          gmt: +1  },
+      { name: 'New York',        gmt: -4  },
+      { name: 'Washington, DC',  gmt: -4  },
+      { name: 'St. Louis',       gmt: -5  },
+      { name: 'Los Angeles',     gmt: -7  },
+      { name: 'Tokyo',           gmt: +9  },
+      { name: 'Beijing',         gmt: +8  },
+      { name: 'Ho Chi Minh City',gmt: +7  },
+      { name: 'Mumbai',          gmt: +5  },
+    ].map(c => ({ ...c, mask: buildMask(c.gmt) }));
+
+    /* ═══════════════════════════════════════
+       State
+    ═══════════════════════════════════════ */
+    let notMode = false;
+    let lastSearchOffset = null;
+
+    /* ═══════════════════════════════════════
+       Build city list UI
+    ═══════════════════════════════════════ */
+    function buildCityList() {
+      const list = document.getElementById('cityList');
+      list.innerHTML = '';
+      CITIES.forEach((city, i) => {
+        const item = document.createElement('label');
+        item.className = 'city-item';
+        item.innerHTML = `
+          <input type="checkbox" id="city${i}" onchange="onCityCheck(${i})" />
+          <div class="custom-check" id="chk${i}"></div>
+          <span class="city-name">${city.name}</span>
+          <span class="city-gmt">GMT ${city.gmt >= 0 ? '+' : ''}${city.gmt}</span>
+        `;
+        item.setAttribute('for', `city${i}`);
+        list.appendChild(item);
+      });
+      updateSelectedBits();
+    }
+
+    function onCityCheck(i) {
+      const cb   = document.getElementById(`city${i}`);
+      const item = cb.closest('.city-item');
+      const chk  = document.getElementById(`chk${i}`);
+      item.classList.toggle('checked', cb.checked);
+      chk.textContent = cb.checked ? '✓' : '';
+      updateSelectedBits();
+    }
+
+    /* ═══════════════════════════════════════
+       Bit sequence for checked cities
+    ═══════════════════════════════════════ */
+    function getCheckedMask() {
+      let combined = 0n;
+      CITIES.forEach((c, i) => {
+        if (document.getElementById(`city${i}`).checked) {
+          combined |= c.mask;
+        }
+      });
+      return combined;
+    }
+
+    function updateSelectedBits() {
+      const mask    = getCheckedMask();
+      const bitsEl  = document.getElementById('selectedBits');
+      const hexEl   = document.getElementById('bitHex');
+      bitsEl.innerHTML = '';
+
+      for (let b = 0; b < 25; b++) {
+        const on  = (mask >> BigInt(b)) & 1n;
+        const div = document.createElement('div');
+        div.className = 'bit' + (on ? ' on' : '');
+        div.title     = `GMT ${GMT_LABELS[b] >= 0 ? '+' : ''}${GMT_LABELS[b]} (bit ${b})`;
+        bitsEl.appendChild(div);
+      }
+
+      hexEl.textContent = mask > 0n ? `0x${mask.toString(16).toUpperCase().padStart(7, '0')}` : '—';
+    }
+
+    /* ═══════════════════════════════════════
+       NOT toggle
+    ═══════════════════════════════════════ */
+    function toggleNot() {
+      notMode = !notMode;
+      document.getElementById('btnNot').classList.toggle('active', notMode);
+    }
+
+    /* ═══════════════════════════════════════
+       Find cities using bitwise AND
+    ═══════════════════════════════════════ */
+    function findCities() {
+      const raw = document.getElementById('gmtInput').value.trim();
+      const inp = document.getElementById('gmtInput');
+      const msg = document.getElementById('msgBox');
+
+      inp.classList.remove('error');
+      msg.style.display = 'none';
+
+      if (raw === '') {
+        inp.classList.add('error');
+        showMsg('⚠ Please enter a GMT offset.', 'error');
+        return;
+      }
+
+      const offset = parseInt(raw);
+      if (isNaN(offset) || offset < -12 || offset > 12) {
+        inp.classList.add('error');
+        showMsg('⚠ GMT offset must be between −12 and +12.', 'error');
+        return;
+      }
+
+      lastSearchOffset = offset;
+      const searchMask = buildMask(offset);
+
+      /* ── Bitwise search: city matches if (cityMask & searchMask) !== 0 ── */
+      const matches = CITIES.filter(c => {
+        const hit = (c.mask & searchMask) !== 0n;
+        return notMode ? !hit : hit;
+      });
+
+      renderResults(matches, offset, searchMask);
+    }
+
+    /* ═══════════════════════════════════════
+       Render results
+    ═══════════════════════════════════════ */
+    function renderResults(matches, offset, searchMask) {
+      const list    = document.getElementById('resultList');
+      const summary = document.getElementById('summary');
+      const viz     = document.getElementById('maskViz');
+
+      list.innerHTML = '';
+
+      if (matches.length === 0) {
+        list.innerHTML = '<div class="empty-note">No cities found for this criteria.</div>';
+        summary.style.display = 'none';
+      } else {
+        matches.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'result-item';
+          const gmtStr = `GMT ${c.gmt >= 0 ? '+' : ''}${c.gmt}`;
+          item.innerHTML = `
+            <div class="result-dot ${notMode ? 'not' : ''}"></div>
+            <span class="result-city">${c.name}</span>
+            <span class="result-gmt ${notMode ? 'not' : ''}">${gmtStr}</span>
+          `;
+          list.appendChild(item);
+        });
+
+        const modeStr  = notMode ? `NOT GMT ${offset >= 0 ? '+' : ''}${offset}` : `GMT ${offset >= 0 ? '+' : ''}${offset}`;
+        summary.innerHTML  = `<strong>${matches.length}</strong> city/cities found matching <strong>${modeStr}</strong>`;
+        summary.style.display = 'block';
+      }
+
+      /* ── Show mask visualizer for first matching city ── */
+      if (!notMode && matches.length > 0) {
+        const city = matches[0];
+        renderMaskViz(searchMask, city.mask);
+        viz.style.display = 'flex';
+        viz.style.flexDirection = 'column';
+      } else {
+        viz.style.display = 'none';
+      }
+    }
+
+    function renderMaskViz(searchMask, cityMask) {
+      const andResult = searchMask & cityMask;
+      ['maskSearch','maskCity','maskResult'].forEach((id, row) => {
+        const el   = document.getElementById(id);
+        const mask = row === 0 ? searchMask : row === 1 ? cityMask : andResult;
+        el.innerHTML = '';
+        for (let b = 0; b < 25; b++) {
+          const on  = (mask >> BigInt(b)) & 1n;
+          const div = document.createElement('div');
+          div.className = 'mbit ';
+          if (!on) {
+            div.className += 'off';
+          } else {
+            div.className += row === 0 ? 'search' : row === 1 ? 'match' : 'result';
+          }
+          el.appendChild(div);
+        }
+      });
+    }
+
+    /* ═══════════════════════════════════════
+       Helpers
+    ═══════════════════════════════════════ */
+    function showMsg(msg, type) {
+      const box = document.getElementById('msgBox');
+      box.textContent   = msg;
+      box.className     = 'msg-box ' + type;
+      box.style.display = 'block';
+    }
+
+    /* Enter key on GMT input */
+    document.getElementById('gmtInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') findCities();
+    });
+
+    /* ═══════════════════════════════════════
+       Init
+    ═══════════════════════════════════════ */
+    buildCityList();
+  </script>
+</body>
+</html>
